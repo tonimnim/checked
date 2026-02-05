@@ -12,11 +12,12 @@ class Settings(BaseSettings):
 
     # Database - Use /data for Railway volume, local path for development
     # Can be overridden with DATABASE_URL env var
+    # Note: SQLite absolute paths need 4 slashes (sqlite:////path)
     database_url: str = (
         "sqlite+aiosqlite:///:memory:"
         if os.environ.get("TESTING") == "1"
         else (
-            "sqlite+aiosqlite:///data/chesskenya.db"
+            "sqlite+aiosqlite:////data/chesskenya.db"
             if os.path.exists("/data")
             else "sqlite+aiosqlite:///./chesskenya.db"
         )
