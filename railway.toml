@@ -7,3 +7,7 @@ healthcheckPath = "/health"
 healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
+
+[[deploy.volumes]]
+mount = "/data"
+name = "sqlite_data"
