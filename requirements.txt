@@ -1,0 +1,46 @@
+# FastAPI and server
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+
+# Database
+sqlalchemy>=2.0.25
+alembic>=1.13.1
+
+# For SQLite (dev) - skip asyncpg for now, add later for PostgreSQL
+aiosqlite>=0.19.0
+# asyncpg>=0.29.0  # Uncomment for PostgreSQL
+
+# Authentication
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
+
+# HTTP client for Chess.com API
+httpx>=0.26.0
+
+# Validation and settings
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+email-validator>=2.1.0
+
+# SMS - Africa's Talking
+africastalking>=1.2.5
+
+# Web Push Notifications (VAPID)
+pywebpush>=1.14.0
+
+# WebSocket support (included with uvicorn[standard] but explicit)
+websockets>=12.0
+
+# Utilities
+python-dateutil>=2.8.2
+
+# Security / Device Fingerprinting
+user-agents>=2.2.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.1.0
+httpx>=0.26.0  # Also used for TestClient
