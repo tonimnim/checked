@@ -497,15 +497,32 @@ class TestOnlineGameSubmission:
     async def test_non_participant_cannot_submit(
         self,
         client: AsyncClient,
+        db_session: AsyncSession,
         online_pairing: Pairing,
-        admin_player: Player,
         online_tournament: Tournament,
     ):
-        """Test that non-participants cannot submit game URLs."""
+        """Test that non-participants (non-admin) cannot submit game URLs."""
+        from app.services.auth import AuthService
+        import uuid
+        # Create a non-admin, non-participant player
+        bystander = Player(
+            id=str(uuid.uuid4()),
+            chess_com_username="bystander",
+            phone="+254700000088",
+            password_hash=AuthService.hash_password("testpass123"),
+            county="Kisumu",
+            age=22,
+            gender="male",
+            is_active=True,
+        )
+        db_session.add(bystander)
+        await db_session.commit()
+        await db_session.refresh(bystander)
+
         response = await client.post(
             f"/api/tournaments/{online_tournament.id}/pairings/{online_pairing.id}/submit-game",
             json={"game_url": "https://www.chess.com/game/live/12345"},
-            headers=get_auth_header(admin_player),
+            headers=get_auth_header(bystander),
         )
 
         assert response.status_code == 403
@@ -542,7 +559,7 @@ class TestResultScoring:
         )
 
         assert response.status_code == 200
-        standings = response.json()
+        standings = response.json()["standings"]
 
         # Find players in standings
         white_standing = next((s for s in standings if s["player_id"] == test_player.id), None)
@@ -581,7 +598,7 @@ class TestResultScoring:
         )
 
         assert response.status_code == 200
-        standings = response.json()
+        standings = response.json()["standings"]
 
         for standing in standings:
             if standing["player_id"] in [test_player.id, test_player2.id]:

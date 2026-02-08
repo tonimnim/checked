@@ -12,6 +12,7 @@ from app.routers.pairings import matches_router
 from app.routers.analytics import router as analytics_router, record_request
 from app.routers.security import router as security_router
 from app.routers.clubs import router as clubs_router
+from app.routers.notifications import router as notifications_router
 from app.services.background_sync import start_background_sync, stop_background_sync
 from app.services.tournament_automation import start_tournament_automation, stop_tournament_automation
 
@@ -78,6 +79,7 @@ app.include_router(analytics_router)
 app.include_router(security_router)
 app.include_router(clubs_router)
 app.include_router(matches_router)
+app.include_router(notifications_router)
 
 
 @app.get("/")

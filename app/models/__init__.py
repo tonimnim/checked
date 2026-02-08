@@ -4,6 +4,7 @@ from app.models.pairing import Pairing
 from app.models.otp import OTP
 from app.models.security import LoginHistory, DeviceFingerprint, SecurityFlag, SharedDeviceAlert
 from app.models.club import Club
+from app.models.notification import Notification
 
 __all__ = [
     "Player",
@@ -16,4 +17,5 @@ __all__ = [
     "SecurityFlag",
     "SharedDeviceAlert",
     "Club",
+    "Notification",
 ]

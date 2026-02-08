@@ -31,6 +31,8 @@ from app.services.push import (
 import json
 from datetime import timedelta
 
+from app.services.notification import create_notification
+
 # Default deadline: 24 hours after pairing created
 PAIRING_DEADLINE_HOURS = 24
 from app.services.auth import get_current_player, get_current_admin
@@ -298,6 +300,35 @@ async def generate_pairings(
                     )
                 except json.JSONDecodeError:
                     pass
+
+            # In-app notifications for both players
+            white_opponent_name = black_player.chess_com_username if black_player else "Unknown"
+            black_opponent_name = white_player.chess_com_username if white_player else "Unknown"
+            notif_data = {
+                "tournament_id": tournament_id,
+                "pairing_id": p.id,
+                "round_number": p.round_number,
+            }
+
+            if white_player:
+                white_data = {**notif_data, "opponent_phone": black_player.phone if black_player else None}
+                await create_notification(
+                    db, white_player.id, "pairing",
+                    f"Round {p.round_number} Pairing",
+                    f"You play as White vs {white_opponent_name} in {tournament.name}",
+                    white_data,
+                )
+
+            if black_player:
+                black_data = {**notif_data, "opponent_phone": white_player.phone if white_player else None}
+                await create_notification(
+                    db, black_player.id, "pairing",
+                    f"Round {p.round_number} Pairing",
+                    f"You play as Black vs {black_opponent_name} in {tournament.name}",
+                    black_data,
+                )
+
+    await db.commit()
 
     # Notify all players in tournament that new round started (WebSocket)
     await notify_round_started(tournament_id, next_round)
@@ -743,6 +774,17 @@ async def claim_opponent_no_show(
         except json.JSONDecodeError:
             pass
 
+    # In-app notification to accused player
+    t_result2 = await db.execute(select(Tournament).where(Tournament.id == tournament_id))
+    tournament_obj = t_result2.scalar_one_or_none()
+    await create_notification(
+        db, accused_player_id, "no_show",
+        "No-Show Claimed",
+        f"{current_player.chess_com_username} claims you didn't show up in {tournament_obj.name if tournament_obj else 'a tournament'}. Submit game URL to dispute.",
+        {"tournament_id": tournament_id, "pairing_id": pairing_id},
+    )
+    await db.commit()
+
     return {
         "message": "No-show claim recorded. If opponent doesn't submit game URL by deadline, they will be forfeited.",
         "deadline": pairing.deadline,
@@ -1014,6 +1056,15 @@ async def claim_result(
         except Exception as e:
             print(f"[PUSH] Failed to send claim notification: {e}")
 
+    # In-app notification to opponent
+    await create_notification(
+        db, opponent_id, "claim",
+        "Result Claimed",
+        f"{current_player.chess_com_username} claims {claim.result.value} in {tournament.name}. Please confirm or dispute.",
+        {"tournament_id": tournament_id, "pairing_id": pairing_id},
+    )
+    await db.commit()
+
     return await build_pairing_response(db, pairing)
 
 
@@ -1096,6 +1147,15 @@ async def confirm_result(
             )
         except Exception as e:
             print(f"[PUSH] Failed to send confirmation notification: {e}")
+
+    # In-app notification to claimer
+    await create_notification(
+        db, pairing.claimed_by, "confirm",
+        "Result Confirmed",
+        f"{current_player.chess_com_username} confirmed {pairing.result.value} in {tournament.name if tournament else 'a tournament'}.",
+        {"tournament_id": tournament_id, "pairing_id": pairing_id},
+    )
+    await db.commit()
 
     return await build_pairing_response(db, pairing)
 
@@ -1199,6 +1259,15 @@ async def dispute_result(
                 )
             except Exception as e:
                 print(f"[PUSH] Failed to notify admin {admin.id}: {e}")
+
+    # In-app notification to claimer about dispute
+    await create_notification(
+        db, pairing.claimed_by, "dispute",
+        "Result Disputed",
+        f"{current_player.chess_com_username} disputed your result claim in {tournament.name if tournament else 'a tournament'}.",
+        {"tournament_id": tournament_id, "pairing_id": pairing_id, "reason": dispute.reason},
+    )
+    await db.commit()
 
     return await build_pairing_response(db, pairing)
 
