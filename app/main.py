@@ -46,7 +46,7 @@ CORS_ORIGINS = (
         "https://www.chesskenya.com",
         "https://checked.co.ke",
         "https://www.checked.co.ke",
-        # Add your Railway frontend URL here
+        "https://checked-kappa.vercel.app",
     ]
 )
 
