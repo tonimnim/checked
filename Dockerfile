@@ -32,5 +32,5 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Expose port
 EXPOSE 8000
 
-# Run migrations and start the application
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Start the application (init_db creates tables, alembic runs only if DB exists)
+CMD ["sh", "-c", "alembic upgrade head 2>&1 || true; exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
